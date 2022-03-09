@@ -1,0 +1,25 @@
+# Super user permission and Docker required.
+sudo: required
+language: generic
+
+services:
+  - docker
+
+before_install:
+  - docker build -t nanraj50/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true nanraj50/react-test npm test
+
+after_success:
+  - docker build -t nanraj50/multi-client ./client
+  - docker build -t nanraj50/multi-nginx ./nginx
+  - docker build -t nanraj50/multi-server ./server
+  - docker build -t nanraj50/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push nanraj50/multi-client
+  - docker push nanraj50/multi-nginx
+  - docker push nanraj50/multi-server
+  - docker push nanraj50/multi-worker
